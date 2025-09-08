@@ -1,0 +1,15 @@
+# Core dependencies
+requests>=2.31.0
+PyYAML>=6.0
+Jinja2>=3.1.0
+
+
+# Development tools
+pytest>=7.0.0
+black>=23.0.0
+flake8>=6.0.0
+
+# Optional dependencies
+rich>=13.0.0  # Better console output
+tqdm>=4.65.0  # Progress bars
+pillow>=10.0.0  # Image processing

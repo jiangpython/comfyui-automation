@@ -1,0 +1,241 @@
+# 提示词元素库
+
+camera_angles:
+  - name: "wide shot"
+    weight: 0.25
+    aliases: ["wide angle", "establishing shot"]
+    description: "广角镜头，展现全景"
+    
+  - name: "medium shot"
+    weight: 0.3
+    aliases: ["mid shot", "waist shot"]
+    description: "中景镜头，展现主体"
+    
+  - name: "close-up"
+    weight: 0.25
+    aliases: ["close shot", "tight shot"]
+    description: "特写镜头，突出细节"
+    
+  - name: "extreme close-up"
+    weight: 0.1
+    aliases: ["macro shot"]
+    description: "极特写镜头"
+    conflicts: ["wide shot"]
+    
+  - name: "bird's eye view"
+    weight: 0.1
+    aliases: ["overhead shot", "top down"]
+    description: "俯视角度"
+
+styles:
+  - name: "photorealistic"
+    weight: 0.2
+    enhancers: ["high quality", "detailed", "realistic"]
+    description: "照片级真实感"
+    
+  - name: "medieval"
+    weight: 0.15
+    enhancers: ["fantasy", "historical"]
+    description: "中世纪风格"
+    
+  - name: "sci-fi"
+    weight: 0.15
+    aliases: ["science fiction", "futuristic"]
+    enhancers: ["high tech", "futuristic"]
+    description: "科幻风格"
+    
+  - name: "cartoon"
+    weight: 0.15
+    aliases: ["animated", "toon"]
+    enhancers: ["colorful", "stylized"]
+    description: "卡通风格"
+    
+  - name: "anime"
+    weight: 0.15
+    aliases: ["manga style"]
+    enhancers: ["japanese art", "stylized"]
+    description: "动漫风格"
+    
+  - name: "oil painting"
+    weight: 0.1
+    aliases: ["painted", "artistic"]
+    enhancers: ["brush strokes", "artistic"]
+    description: "油画风格"
+    
+  - name: "watercolor"
+    weight: 0.1
+    aliases: ["painted", "soft"]
+    enhancers: ["soft colors", "artistic"]
+    description: "水彩画风格"
+
+lighting:
+  - name: "soft lighting"
+    weight: 0.25
+    description: "柔和光照"
+    
+  - name: "dramatic lighting"
+    weight: 0.2
+    description: "戏剧化光照"
+    
+  - name: "golden hour"
+    weight: 0.15
+    aliases: ["sunset lighting", "warm light"]
+    description: "黄金时刻光照"
+    
+  - name: "neon lighting"
+    weight: 0.1
+    aliases: ["cyberpunk lighting"]
+    description: "霓虹灯光"
+    conflicts: ["natural lighting"]
+    
+  - name: "natural lighting"
+    weight: 0.2
+    aliases: ["daylight", "sunlight"]
+    description: "自然光照"
+    
+  - name: "studio lighting"
+    weight: 0.1
+    description: "工作室灯光"
+
+moods:
+  - name: "peaceful"
+    weight: 0.2
+    aliases: ["serene", "calm", "tranquil"]
+    description: "宁静的"
+    
+  - name: "mysterious"
+    weight: 0.15
+    aliases: ["enigmatic", "mystical"]
+    description: "神秘的"
+    
+  - name: "vibrant"
+    weight: 0.2
+    aliases: ["lively", "energetic", "colorful"]
+    description: "充满活力的"
+    
+  - name: "dark"
+    weight: 0.15
+    aliases: ["gloomy", "moody"]
+    description: "黑暗的"
+    conflicts: ["bright", "cheerful"]
+    
+  - name: "ethereal"
+    weight: 0.1
+    aliases: ["dreamy", "otherworldly"]
+    description: "超凡的"
+    
+  - name: "cozy"
+    weight: 0.15
+    aliases: ["warm", "comfortable", "intimate"]
+    description: "温馨的"
+    
+  - name: "epic"
+    weight: 0.05
+    aliases: ["grand", "majestic"]
+    description: "史诗般的"
+
+subjects:
+  # 建筑类
+  - name: "forest cabin"
+    weight: 0.15
+    category: "architecture"
+    aliases: ["woodland cottage", "log cabin"]
+    description: "森林小屋"
+    
+  - name: "mountain lake"
+    weight: 0.15
+    category: "landscape"
+    aliases: ["alpine lake"]
+    description: "山间湖泊"
+    
+  - name: "city street"
+    weight: 0.1
+    category: "urban"
+    aliases: ["urban street", "boulevard"]
+    description: "城市街道"
+    
+  - name: "space station"
+    weight: 0.05
+    category: "sci-fi"
+    aliases: ["orbital platform"]
+    description: "太空站"
+    
+  - name: "ancient temple"
+    weight: 0.1
+    category: "architecture"
+    aliases: ["ruins", "monastery"]
+    description: "古代神庙"
+    
+  - name: "enchanted forest"
+    weight: 0.15
+    category: "fantasy"
+    aliases: ["magical woods", "fairy forest"]
+    description: "魔法森林"
+    
+  - name: "desert oasis"
+    weight: 0.1
+    category: "landscape"
+    aliases: ["desert spring"]
+    description: "沙漠绿洲"
+    
+  - name: "floating island"
+    weight: 0.05
+    category: "fantasy"
+    aliases: ["sky island"]
+    description: "浮空岛"
+    
+  - name: "cyberpunk city"
+    weight: 0.08
+    category: "sci-fi"
+    aliases: ["neon city", "tech metropolis"]
+    description: "赛博朋克城市"
+    
+  - name: "medieval castle"
+    weight: 0.07
+    category: "architecture"
+    aliases: ["fortress", "stronghold"]
+    description: "中世纪城堡"
+
+# 质量增强词
+quality_enhancers:
+  - name: "high quality"
+    weight: 0.8
+    description: "高质量"
+    
+  - name: "detailed"
+    weight: 0.7
+    description: "详细的"
+    
+  - name: "masterpiece"
+    weight: 0.3
+    description: "杰作"
+    
+  - name: "8k resolution"
+    weight: 0.2
+    description: "8K分辨率"
+    
+  - name: "professional"
+    weight: 0.4
+    description: "专业的"
+
+# 模板定义
+templates:
+  - pattern: "{camera_angles} of {subjects}, {styles} style, {lighting}, {moods} atmosphere"
+    weight: 0.3
+    description: "完整描述模板"
+    
+  - pattern: "{subjects} in {styles} art style, {camera_angles}, {lighting}"
+    weight: 0.25
+    description: "艺术风格模板"
+    
+  - pattern: "{moods} {subjects}, {styles} rendering, {camera_angles}"
+    weight: 0.2
+    description: "渲染风格模板"
+    
+  - pattern: "{camera_angles} of {moods} {subjects}, {lighting}"
+    weight: 0.15
+    description: "简化模板"
+    
+  - pattern: "{subjects}, {styles} style, {lighting}, {quality_enhancers}"
+    weight: 0.1
+    description: "质量优先模板"
