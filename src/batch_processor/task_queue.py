@@ -75,19 +75,24 @@ class TaskQueue:
         
         base_params = base_params or {}
         task_ids = []
+        # 统一批次ID，便于按批次归档
+        batch_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        batch_id = f"batch_{batch_timestamp}"
         
         for i, prompt in enumerate(prompts):
-            task_id = f"batch_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i:04d}"
+            task_id = f"{batch_id}_{i:04d}"
             
             # 创建任务元数据
             task_data = {
                 'task_id': task_id,
                 'prompt': prompt,
-                'workflow_params': base_params.copy(),
+                'workflow_params': {**base_params, 'batch_id': batch_id},
                 **base_params
             }
             
             task = create_task_from_prompt_data(task_data, workflow_type)
+            # 动态附加batch_id，供上层按批次归档/展示
+            setattr(task, 'batch_id', batch_id)
             task_id_added = self.add_task(task, workflow_params=base_params)
             task_ids.append(task_id_added)
         
@@ -101,16 +106,19 @@ class TaskQueue:
         
         base_params = base_params or {}
         task_ids = []
+        # 统一批次ID，便于按批次归档
+        batch_timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
+        batch_id = f"task_gen_{batch_timestamp}"
         
         for i, generated_prompt in enumerate(generated_prompts):
-            task_id = f"gen_{datetime.now().strftime('%Y%m%d_%H%M%S')}_{i:04d}"
+            task_id = f"{batch_id}_{i:04d}"
             
             # 创建任务元数据，包含生成的提示词信息
             task_data = {
                 'task_id': task_id,
                 'prompt': generated_prompt.text,
                 'quality_score': generated_prompt.quality_score,
-                'workflow_params': base_params.copy(),
+                'workflow_params': {**base_params, 'batch_id': batch_id},
                 **base_params
             }
             
@@ -120,6 +128,7 @@ class TaskQueue:
                 task_data['tags'] = element_names[:5]  # 限制标签数量
             
             task = create_task_from_prompt_data(task_data, workflow_type)
+            setattr(task, 'batch_id', batch_id)
             task_id_added = self.add_task(task, workflow_params=base_params)
             task_ids.append(task_id_added)
         

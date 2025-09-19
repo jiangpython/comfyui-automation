@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ComfyUI 自动化系统 - 图片画廊</title>
+    <link rel="stylesheet" href="../static/css/gallery.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+</head>
+<body>
+    <!-- 顶部导航栏 -->
+    <nav class="navbar">
+        <div class="nav-container">
+            <div class="nav-brand">
+                <i class="fas fa-magic"></i>
+                <span>ComfyUI Automation</span>
+            </div>
+            <div class="nav-stats">
+                <div class="stat-item">
+                    <span class="stat-label">总图片</span>
+                    <span class="stat-value" id="totalImages">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">已选择</span>
+                    <span class="stat-value" id="selectedCount">0</span>
+                </div>
+                <div class="stat-item">
+                    <span class="stat-label">成功率</span>
+                    <span class="stat-value" id="successRate">0%</span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主要内容区域 -->
+    <main class="main-container">
+        <!-- 侧边栏控制面板 -->
+        <aside class="sidebar">
+            <div class="sidebar-section">
+                <h3><i class="fas fa-filter"></i> 筛选选项</h3>
+                
+                <!-- 搜索框 -->
+                <div class="search-container">
+                    <input type="text" id="searchInput" placeholder="搜索提示词...">
+                    <i class="fas fa-search search-icon"></i>
+                </div>
+
+                <!-- 日期筛选 -->
+                <div class="filter-group">
+                    <label>日期范围</label>
+                    <div class="date-inputs">
+                        <input type="date" id="dateFrom" class="date-input">
+                        <input type="date" id="dateTo" class="date-input">
+                    </div>
+                </div>
+
+                <!-- 状态筛选 -->
+                <div class="filter-group">
+                    <label>任务状态</label>
+                    <div class="checkbox-group">
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="completed" checked>
+                            <span class="checkmark"></span>
+                            已完成
+                        </label>
+                        <label class="checkbox-label">
+                            <input type="checkbox" value="failed">
+                            <span class="checkmark"></span>
+                            失败
+                        </label>
+                    </div>
+                </div>
+
+                <!-- 质量评分筛选 -->
+                <div class="filter-group">
+                    <label>质量评分</label>
+                    <div class="range-container">
+                        <input type="range" id="qualityRange" min="0" max="1" step="0.1" value="0">
+                        <span class="range-value">≥ <span id="qualityValue">0.0</span></span>
+                    </div>
+                </div>
+
+                <!-- 标签筛选 -->
+                <div class="filter-group">
+                    <label>标签</label>
+                    <div class="tags-container" id="tagsContainer">
+                        <!-- 动态生成标签 -->
+                    </div>
+                </div>
+
+                <!-- 排序选项 -->
+                <div class="filter-group">
+                    <label>排序方式</label>
+                    <select id="sortBy" class="sort-select">
+                        <option value="date_desc">最新优先</option>
+                        <option value="date_asc">最旧优先</option>
+                        <option value="quality_desc">质量最高</option>
+                        <option value="quality_asc">质量最低</option>
+                        <option value="name_asc">名称A-Z</option>
+                        <option value="name_desc">名称Z-A</option>
+                    </select>
+                </div>
+            </div>
+
+            <!-- 批量操作 -->
+            <div class="sidebar-section">
+                <h3><i class="fas fa-tasks"></i> 批量操作</h3>
+                
+                <div class="batch-actions">
+                    <button class="btn btn-primary" id="selectAllBtn">
+                        <i class="fas fa-check-square"></i> 全选
+                    </button>
+                    <button class="btn btn-info" id="invertSelectionBtn">
+                        <i class="fas fa-exchange-alt"></i> 反选
+                    </button>
+                    <button class="btn btn-secondary" id="clearSelectionBtn">
+                        <i class="fas fa-square"></i> 清空选择
+                    </button>
+                </div>
+
+                <div class="batch-actions">
+                    <div class="export-dropdown">
+                        <button class="btn btn-success" id="exportSelectedBtn">
+                            <i class="fas fa-download"></i> 导出选中
+                        </button>
+                        <button class="btn btn-success dropdown-toggle" id="exportDropdownBtn">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu" id="exportDropdownMenu">
+                            <button class="dropdown-item" onclick="galleryManager.exportSelected('json')">
+                                <i class="fas fa-code"></i> JSON 格式
+                            </button>
+                            <button class="dropdown-item" onclick="galleryManager.exportSelected('csv')">
+                                <i class="fas fa-table"></i> CSV 格式
+                            </button>
+                            <button class="dropdown-item" onclick="galleryManager.exportFilePaths()">
+                                <i class="fas fa-list"></i> 文件路径
+                            </button>
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" id="deleteSelectedBtn">
+                        <i class="fas fa-trash"></i> 删除选中
+                    </button>
+                </div>
+
+                <!-- 批量标签操作 -->
+                <div class="batch-tagging">
+                    <h4><i class="fas fa-tags"></i> 批量标签</h4>
+                    <div class="batch-tag-input">
+                        <input type="text" id="batchTagInput" placeholder="为选中图片添加标签..." maxlength="20">
+                        <button class="btn btn-outline" id="addBatchTagBtn">
+                            <i class="fas fa-plus"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 收藏夹 -->
+                <div class="favorites-section">
+                    <h4><i class="fas fa-star"></i> 收藏夹</h4>
+                    <div class="favorite-count">
+                        <span id="favoriteCount">0</span> 个收藏图片
+                    </div>
+                    <button class="btn btn-outline" id="showFavoritesBtn">
+                        <i class="fas fa-eye"></i> 仅显示收藏
+                    </button>
+                </div>
+            </div>
+
+            <!-- 统计信息 -->
+            <div class="sidebar-section">
+                <h3><i class="fas fa-chart-bar"></i> 统计信息</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-images"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="totalGenerated">0</span>
+                            <span class="stat-text">总生成数</span>
+                        </div>
+                    </div>
+                    
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-clock"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="avgTime">0</span>
+                            <span class="stat-text">平均耗时(s)</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-award"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="highQualityCount">0</span>
+                            <span class="stat-text">高质量图片</span>
+                        </div>
+                    </div>
+
+                    <div class="stat-card">
+                        <div class="stat-icon">
+                            <i class="fas fa-hdd"></i>
+                        </div>
+                        <div class="stat-info">
+                            <span class="stat-number" id="totalSize">0</span>
+                            <span class="stat-text">总大小(MB)</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </aside>
+
+        <!-- 图片画廊区域 -->
+        <section class="gallery-container">
+            <!-- 工具栏 -->
+            <div class="gallery-toolbar">
+                <div class="view-controls">
+                    <button class="view-btn active" data-view="grid" title="网格视图">
+                        <i class="fas fa-th"></i>
+                    </button>
+                    <button class="view-btn" data-view="list" title="列表视图">
+                        <i class="fas fa-list"></i>
+                    </button>
+                    <button class="view-btn" data-view="masonry" title="瀑布流">
+                        <i class="fas fa-columns"></i>
+                    </button>
+                    <div class="separator"></div>
+                    <button class="selection-mode-btn" id="selectionModeBtn" title="多选模式">
+                        <i class="fas fa-mouse-pointer"></i>
+                        <span class="btn-text">选择</span>
+                    </button>
+                    <div class="separator"></div>
+                    <div class="dropdown">
+                        <button class="btn" id="importFolderBtn" title="导入文件夹">
+                            <i class="fas fa-folder-open"></i>
+                            <span class="btn-text">导入文件夹</span>
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                        <div class="dropdown-menu" id="importDropdown">
+                            <a href="#" id="importSingleFolder" class="dropdown-item">
+                                <i class="fas fa-folder"></i>
+                                选择单个文件夹
+                            </a>
+                            <a href="#" id="importMultiFolder" class="dropdown-item">
+                                <i class="fas fa-folder-plus"></i>
+                                选择多个文件夹
+                            </a>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="size-controls">
+                    <label>图片大小:</label>
+                    <input type="range" id="imageSizeSlider" min="150" max="400" value="250">
+                </div>
+
+                <div class="display-info">
+                    <span>显示 <span id="displayedCount">0</span> / <span id="totalCount">0</span> 张图片</span>
+                </div>
+            </div>
+
+            <!-- 图片网格 -->
+            <div class="gallery-grid" id="galleryGrid">
+                <!-- 图片项目将通过JavaScript动态生成 -->
+            </div>
+
+            <!-- 加载更多按钮 -->
+            <div class="load-more-container">
+                <button class="btn btn-primary" id="loadMoreBtn">
+                    <i class="fas fa-plus"></i> 加载更多
+                </button>
+            </div>
+
+            <!-- 无结果提示 -->
+            <div class="no-results" id="noResults" style="display: none;">
+                <i class="fas fa-search"></i>
+                <h3>未找到匹配的图片</h3>
+                <p>尝试调整筛选条件或搜索关键词</p>
+            </div>
+        </section>
+    </main>
+
+    <!-- 图片详情模态框 -->
+    <div class="modal" id="imageModal">
+        <div class="modal-backdrop" id="modalBackdrop"></div>
+        <div class="modal-container">
+            <div class="modal-header">
+                <h3 id="modalTitle">图片详情</h3>
+                <button class="modal-close" id="modalClose">
+                    <i class="fas fa-times"></i>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div class="modal-image-container">
+                    <img id="modalImage" src="" alt="预览图片">
+                </div>
+                <div class="modal-info">
+                    <div class="info-section">
+                        <h4>基本信息</h4>
+                        <div class="info-grid">
+                            <div class="info-item">
+                                <label>任务ID:</label>
+                                <span id="infoTaskId">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>创建时间:</label>
+                                <span id="infoCreatedAt">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>生成时间:</label>
+                                <span id="infoGenerationTime">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>质量评分:</label>
+                                <span id="infoQualityScore">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>文件大小:</label>
+                                <span id="infoFileSize">-</span>
+                            </div>
+                            <div class="info-item">
+                                <label>分辨率:</label>
+                                <span id="infoResolution">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>提示词</h4>
+                        <div class="prompt-text" id="infoPrompt">-</div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>标签</h4>
+                        <div class="tags-list" id="infoTags">-</div>
+                        <div class="tags-editor">
+                            <div class="tag-input-container">
+                                <input type="text" id="tagInput" placeholder="添加标签..." maxlength="20">
+                                <button type="button" id="addTagBtn" class="btn-icon">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div class="popular-tags">
+                                <small>常用标签：</small>
+                                <div class="popular-tags-list" id="popularTagsList">
+                                    <!-- 动态生成热门标签 -->
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-section">
+                        <h4>工作流参数</h4>
+                        <div class="workflow-params" id="infoWorkflowParams">-</div>
+                    </div>
+                </div>
+            </div>
+            <div class="modal-footer">
+                <div class="rating-section">
+                    <label>评分:</label>
+                    <div class="star-rating" id="starRating">
+                        <i class="fas fa-star" data-rating="1"></i>
+                        <i class="fas fa-star" data-rating="2"></i>
+                        <i class="fas fa-star" data-rating="3"></i>
+                        <i class="fas fa-star" data-rating="4"></i>
+                        <i class="fas fa-star" data-rating="5"></i>
+                    </div>
+                </div>
+                <div class="action-buttons">
+                    <button class="btn btn-favorite" id="toggleFavoriteBtn">
+                        <i class="fas fa-heart"></i> 收藏
+                    </button>
+                    <button class="btn btn-primary" id="downloadBtn">
+                        <i class="fas fa-download"></i> 下载
+                    </button>
+                    <button class="btn btn-secondary" id="copyPromptBtn">
+                        <i class="fas fa-copy"></i> 复制提示词
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 加载指示器 -->
+    <div class="loading-overlay" id="loadingOverlay">
+        <div class="spinner"></div>
+        <p>加载中...</p>
+    </div>
+
+    <!-- 提示消息 -->
+    <div class="toast" id="toast">
+        <div class="toast-content">
+            <i class="toast-icon"></i>
+            <span class="toast-message"></span>
+        </div>
+    </div>
+
+    <!-- 隐藏的文件夹选择器 -->
+    <input type="file" id="folderInput" webkitdirectory multiple accept="image/*" style="display:none" />
+    <input type="file" id="multiFolderInput" webkitdirectory multiple accept="image/*" style="display:none" />
+
+    <!-- JavaScript -->
+    <script src="../static/js/gallery.js"></script>
+</body>
+</html>

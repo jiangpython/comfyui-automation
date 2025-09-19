@@ -1,0 +1,22 @@
+global:
+  joiner: ", "
+  order: ["mood", "lighting", "scene", "style"]
+  max_combinations: 200
+
+categories:
+  mood: ["cozy", "mysterious", "epic", "peaceful"]
+  lighting: ["soft lighting", "golden hour", "neon lighting", "dramatic lighting"]
+  scene: ["forest", "snow", "medieval", "sci-fi"]
+  style: ["anime", "photorealistic", "watercolor"]
+
+subjects:
+  - name: "森林中的小木屋"
+    use_categories: ["mood", "lighting", "scene"]
+  - name: "海边灯塔"
+    use_categories: ["mood", "lighting", "style"]
+
+overrides:
+  "森林中的小木屋":
+    mood: ["cozy", "mysterious"]
+    lighting: ["soft lighting", "golden hour"]
+

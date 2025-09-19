@@ -18,6 +18,7 @@ class Task:
     id: str
     prompt: str
     workflow_params: Dict[str, Any]
+    workflow_type: str = "txt2img"  # 工作流类型
     status: str = "pending"  # pending, running, completed, failed
     created_at: Optional[datetime] = None
     started_at: Optional[datetime] = None
@@ -232,10 +233,24 @@ class TaskExecutor:
     def _prepare_workflow(self, task: Task) -> Optional[Dict[str, Any]]:
         """准备工作流"""
         try:
+            # 检查workflow_params是否已经是完整的工作流JSON
+            # 完整的工作流JSON应该包含数字键（节点ID）
+            if isinstance(task.workflow_params, dict) and any(isinstance(k, str) and k.isdigit() for k in task.workflow_params.keys()):
+                # 已经是完整的工作流JSON，直接返回
+                logger.debug("使用预处理的工作流JSON")
+                return task.workflow_params
+            
+            # 否则，这是参数字典，需要通过工作流管理器处理
             if self.workflow_manager:
+                # 构建完整的参数字典，确保包含prompt
+                workflow_params = task.workflow_params.copy()
+                workflow_params['prompt'] = task.prompt
+                
                 # 使用工作流管理器
+                logger.debug("通过工作流管理器创建工作流")
                 return self.workflow_manager.create_workflow(
-                    task.workflow_params,
+                    task.workflow_type,
+                    workflow_params,
                     task_id=task.id
                 )
             else:
@@ -276,6 +291,7 @@ class TaskExecutor:
             id=task_id,
             prompt=prompt,
             workflow_params=workflow_params,
+            workflow_type=workflow_type,
             metadata={
                 'workflow_type': workflow_type,
                 'created_from': 'prompt'

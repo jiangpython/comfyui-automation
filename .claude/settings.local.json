@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Bash(python test:*)"
+      "Bash(python test:*)",
+      "Bash(./venv/Scripts/python.exe test_main_simple.py:*)"
     ],
     "deny": [],
     "ask": []

@@ -549,6 +549,32 @@ class TaskDatabase:
             logger.error(f"获取热门标签失败: {e}")
             return []
     
+    def get_all_tasks(self) -> List[TaskMetadata]:
+        """获取所有任务"""
+        return self.list_tasks(limit=10000)  # 获取大量任务，实际上是所有任务
+    
+    def get_tasks_by_status(self, status: str) -> List[TaskMetadata]:
+        """根据状态获取任务"""
+        return self.list_tasks(status=status, limit=10000)
+    
+    def get_tasks_by_batch(self, batch_id: str) -> List[TaskMetadata]:
+        """根据批次ID获取任务"""
+        try:
+            with sqlite3.connect(self.db_path) as conn:
+                conn.row_factory = sqlite3.Row
+                cursor = conn.execute('''
+                    SELECT * FROM tasks 
+                    WHERE workflow_params LIKE ? 
+                    ORDER BY created_at DESC
+                ''', (f'%"batch_id": "{batch_id}"%',))
+                rows = cursor.fetchall()
+                
+                return [self._row_to_task_metadata(row) for row in rows]
+                
+        except Exception as e:
+            logger.error(f"根据批次获取任务失败: {e}")
+            return []
+    
     def cleanup_old_data(self, days_to_keep: int = 90) -> int:
         """清理旧数据"""
         cutoff_date = datetime.now() - timedelta(days=days_to_keep)

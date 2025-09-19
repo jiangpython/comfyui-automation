@@ -309,12 +309,16 @@ class ResultManager:
     
     def organize_output_files(self, task_id: str, 
                             source_files: List[Path],
-                            create_subdirectory: bool = True) -> TaskResult:
-        """整理输出文件到管理目录"""
+                            create_subdirectory: bool = True,
+                            batch_id: Optional[str] = None) -> TaskResult:
+        """整理输出文件到管理目录（支持按批次目录归档）。"""
         
-        # 创建任务特定的目录
+        # 目录策略：若提供 batch_id，则优先使用 batch_<id> 作为目录；否则回退 task_<task_id>
         if create_subdirectory:
-            task_dir = self.output_dir / f"task_{task_id}"
+            if batch_id:
+                task_dir = self.output_dir / f"{batch_id}"
+            else:
+                task_dir = self.output_dir / f"task_{task_id}"
             task_dir.mkdir(exist_ok=True)
             storage_path = str(task_dir)
         else:
@@ -598,3 +602,33 @@ class ResultManager:
             })
         
         return info
+    
+    def get_all_tasks(self) -> List[TaskMetadata]:
+        """获取所有任务"""
+        if self.enable_db and self.db:
+            return self.db.get_all_tasks()
+        elif self.enable_json:
+            return self._list_tasks_from_json()
+        else:
+            logger.warning("没有启用任何存储后端")
+            return []
+    
+    def get_tasks_by_status(self, status: str) -> List[TaskMetadata]:
+        """根据状态获取任务"""
+        if self.enable_db and self.db:
+            return self.db.get_tasks_by_status(status)
+        elif self.enable_json:
+            all_tasks = self._list_tasks_from_json()
+            return [task for task in all_tasks if task.status == status]
+        else:
+            return []
+    
+    def get_tasks_by_batch(self, batch_id: str) -> List[TaskMetadata]:
+        """根据批次ID获取任务"""
+        if self.enable_db and self.db:
+            return self.db.get_tasks_by_batch(batch_id)
+        elif self.enable_json:
+            all_tasks = self._list_tasks_from_json()
+            return [task for task in all_tasks if getattr(task, 'batch_id', None) == batch_id]
+        else:
+            return []

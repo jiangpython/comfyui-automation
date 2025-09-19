@@ -8,10 +8,12 @@ from typing import Dict, List, Any, Optional, Callable
 import logging
 
 from ..prompt_generator import PromptGenerator
+from ..prompt_generator.yaml_plan import load_prompt_plan, generate_prompts_from_plan
 from ..workflow_manager import WorkflowManager, ParameterMapper
 from ..comfyui_client import ComfyUIClient, TaskExecutor
 from ..comfyui_client.task_executor import Task
 from ..utils import ResultManager, TaskMetadata, TaskResult
+from ..gallery import GalleryGenerator
 from .task_queue import TaskQueue
 from .progress_monitor import ProgressMonitor
 
@@ -93,6 +95,15 @@ class BatchProcessor:
         # 进度监控器
         self.progress_monitor = ProgressMonitor()
         logger.debug("进度监控器初始化完成")
+        
+        # 画廊生成器
+        template_dir = Path(__file__).parent.parent.parent / "templates"
+        self.gallery_generator = GalleryGenerator(
+            result_manager=self.result_manager,
+            template_dir=template_dir,
+            output_dir=self.output_dir
+        )
+        logger.debug("画廊生成器初始化完成")
     
     def add_progress_callback(self, callback: Callable):
         """添加进度监控回调"""
@@ -165,6 +176,38 @@ class BatchProcessor:
         )
         
         logger.info(f"穷举式批量任务创建完成: {len(task_ids)} 个任务")
+        return task_ids
+
+    def create_batch_from_yaml_plan(self,
+                                   plan_path: Path,
+                                   workflow_type: str = "txt2img",
+                                   workflow_params: Optional[Dict[str, Any]] = None) -> List[str]:
+        """从YAML计划创建批量任务（主提示词 + 分类笛卡尔积）。
+
+        Args:
+            plan_path: YAML 计划文件路径
+            workflow_type: 工作流类型
+            workflow_params: 传入工作流的基础参数
+        Returns:
+            创建的任务ID列表
+        """
+
+        logger.info(f"从YAML计划创建批量任务: {plan_path}")
+
+        plan = load_prompt_plan(str(plan_path))
+        prompts = generate_prompts_from_plan(plan)
+
+        if not prompts:
+            logger.warning("YAML 计划未生成任何提示词")
+            return []
+
+        task_ids = self.task_queue.add_tasks_from_prompts(
+            prompts=prompts,
+            workflow_type=workflow_type,
+            base_params=workflow_params or {}
+        )
+
+        logger.info(f"YAML计划批量任务创建完成: {len(task_ids)} 个任务")
         return task_ids
     
     def start_batch_processing(self, 
@@ -379,6 +422,7 @@ class BatchProcessor:
                 id=task_metadata.task_id,
                 prompt=task_metadata.prompt,
                 workflow_params=workflow_data,
+                workflow_type=task_metadata.workflow_type,
                 metadata=task_metadata.to_dict()
             )
             
@@ -436,10 +480,13 @@ class BatchProcessor:
             
             # 整理输出文件
             if output_files:
+                # 批次归档：若任务元数据带有 batch_id，则按批次统一存放
+                batch_id = getattr(task_metadata, 'batch_id', None)
                 organized_result = self.result_manager.organize_output_files(
                     task_metadata.task_id,
                     output_files,
-                    create_subdirectory=True
+                    create_subdirectory=True,
+                    batch_id=batch_id
                 )
                 result = organized_result
             
@@ -447,6 +494,12 @@ class BatchProcessor:
             self.result_manager.save_task_complete(task_metadata, result)
             
             logger.info(f"任务完成: {task_metadata.task_id}")
+            
+            # 成功后可选择增量更新画廊（避免只看到历史）
+            try:
+                self.gallery_generator.update_gallery()
+            except Exception as _:
+                logger.debug("增量更新画廊时忽略非致命错误")
             
         except Exception as e:
             logger.error(f"处理任务成功时出错: {e}")
@@ -480,6 +533,43 @@ class BatchProcessor:
         output_files.sort(key=lambda f: f.stat().st_mtime, reverse=True)
         
         return output_files
+    
+    def generate_gallery(self, 
+                        batch_ids: Optional[List[str]] = None,
+                        status_filter: Optional[List[str]] = None,
+                        date_from: Optional[datetime] = None,
+                        date_to: Optional[datetime] = None) -> Dict[str, Any]:
+        """生成HTML画廊
+        
+        Args:
+            batch_ids: 要包含的批次ID列表
+            status_filter: 任务状态筛选 ['completed', 'failed'] 
+            date_from: 开始日期
+            date_to: 结束日期
+            
+        Returns:
+            生成结果信息
+        """
+        
+        logger.info("生成HTML画廊")
+        
+        return self.gallery_generator.generate_gallery(
+            batch_ids=batch_ids,
+            status_filter=status_filter or ['completed'],
+            date_from=date_from,
+            date_to=date_to
+        )
+    
+    def update_gallery(self) -> Dict[str, Any]:
+        """增量更新画廊（添加新生成的图片）"""
+        
+        logger.info("增量更新HTML画廊")
+        return self.gallery_generator.update_gallery()
+    
+    def get_gallery_info(self) -> Dict[str, Any]:
+        """获取画廊信息"""
+        
+        return self.gallery_generator.get_gallery_info()
     
     def cleanup(self):
         """清理资源"""

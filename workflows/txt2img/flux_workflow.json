@@ -1,5 +1,5 @@
 {
-  "5": {
+  "1": {
     "inputs": {
       "width": 1024,
       "height": 1024,
@@ -10,30 +10,30 @@
       "title": "Empty Latent Image"
     }
   },
-  "6": {
+  "2": {
     "inputs": {
       "text": "a beautiful landscape with mountains and lakes, high quality, detailed",
-      "clip": ["clip_loader", 0]
+      "clip": ["4", 0]
     },
     "class_type": "CLIPTextEncode",
     "_meta": {
       "title": "CLIP Text Encode (Prompt)"
     }
   },
-  "8": {
+  "3": {
     "inputs": {
-      "samples": ["execute", 0],
-      "vae": ["vae_loader", 0]
+      "text": "blurry, low quality, bad anatomy",
+      "clip": ["4", 0]
     },
-    "class_type": "VAEDecode",
+    "class_type": "CLIPTextEncode",
     "_meta": {
-      "title": "VAE Decode"
+      "title": "CLIP Text Encode (Negative)"
     }
   },
-  "clip_loader": {
+  "4": {
     "inputs": {
       "clip_name1": "clip_l.safetensors",
-      "clip_name2": "t5xxl_fp16.safetensors",
+      "clip_name2": "t5xxl_fp16.safetensors", 
       "type": "flux"
     },
     "class_type": "DualCLIPLoader",
@@ -41,7 +41,7 @@
       "title": "DualCLIPLoader"
     }
   },
-  "unet_loader": {
+  "5": {
     "inputs": {
       "unet_name": "flux1-dev.safetensors",
       "weight_dtype": "default"
@@ -51,7 +51,7 @@
       "title": "Load Diffusion Model"
     }
   },
-  "vae_loader": {
+  "6": {
     "inputs": {
       "vae_name": "ae.safetensors"
     },
@@ -60,28 +60,38 @@
       "title": "Load VAE"
     }
   },
-  "execute": {
+  "7": {
     "inputs": {
-      "model": ["unet_loader", 0],
-      "conditioning": ["6", 0],
-      "latent_image": ["5", 0],
+      "seed": 0,
       "steps": 20,
-      "guidance": 7.0,
-      "sampler": "euler",
+      "cfg": 7.0,
+      "sampler_name": "euler",
       "scheduler": "simple",
-      "seed": 123456,
-      "max_shift": 1.15,
-      "base_shift": 0.5
+      "denoise": 1.0,
+      "model": ["5", 0],
+      "positive": ["2", 0],
+      "negative": ["3", 0],
+      "latent_image": ["1", 0]
     },
-    "class_type": "FluxSamplerParams+",
+    "class_type": "KSampler",
     "_meta": {
-      "title": "FluxSamplerParams+"
+      "title": "KSampler"
     }
   },
-  "result": {
+  "8": {
     "inputs": {
-      "images": ["8", 0],
-      "filename_prefix": "txt2img"
+      "samples": ["7", 0],
+      "vae": ["6", 0]
+    },
+    "class_type": "VAEDecode",
+    "_meta": {
+      "title": "VAE Decode"
+    }
+  },
+  "9": {
+    "inputs": {
+      "filename_prefix": "flux_txt2img",
+      "images": ["8", 0]
     },
     "class_type": "SaveImage",
     "_meta": {

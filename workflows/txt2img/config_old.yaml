@@ -1,0 +1,176 @@
+# txt2img工作流配置
+workflow_info:
+  name: "txt2img"
+  version: "1.0.0"
+  description: "文本生成图像工作流"
+  author: "ComfyUI Automation"
+  created_date: "2025-09-08"
+  
+# 工作流文件路径
+workflow_file: "txt2img.json"  # 相对于当前目录
+
+# 默认参数
+default_params:
+  # 图像尺寸
+  width: 1024
+  height: 1024
+  batch_size: 1
+  
+  # 采样参数
+  steps: 20
+  cfg: 7.0
+  sampler_name: "euler"
+  scheduler: "normal"
+  denoise: 1.0  # 降噪强度
+  
+  # 种子设置
+  seed: -1  # -1 表示随机种子
+  
+  # 输出设置
+  filename_prefix: "txt2img"
+  save_format: "png"
+
+# 参数映射 - 将标准参数名映射到工作流中的节点
+parameter_mapping:
+  # 提示词相关
+  prompt:
+    node_id: "6"
+    input_name: "text"
+    description: "正面提示词"
+    required: true
+    
+  negative_prompt:
+    node_id: "7" 
+    input_name: "text"
+    description: "负面提示词"
+    required: false
+    default: ""
+    
+  # 图像尺寸
+  width:
+    node_id: "5"
+    input_name: "width"
+    description: "图像宽度"
+    type: "integer"
+    min: 64
+    max: 2048
+    step: 64
+    
+  height:
+    node_id: "5"
+    input_name: "height"
+    description: "图像高度"
+    type: "integer"
+    min: 64
+    max: 2048
+    step: 64
+    
+  batch_size:
+    node_id: "5"
+    input_name: "batch_size"
+    description: "批次大小"
+    type: "integer"
+    min: 1
+    max: 10
+    
+  # 采样参数
+  steps:
+    node_id: "execute"
+    input_name: "steps"
+    description: "采样步数"
+    type: "integer"
+    min: 1
+    max: 50
+    
+  cfg:
+    node_id: "execute"
+    input_name: "guidance"
+    description: "CFG Scale"
+    type: "float"
+    min: 1.0
+    max: 20.0
+    
+  # 种子
+  seed:
+    node_id: "execute"
+    input_name: "seed"
+    description: "随机种子"
+    type: "integer"
+    min: 0
+    max: 2147483647
+    
+  # 降噪强度
+  denoise:
+    node_id: "execute"
+    input_name: "denoise"
+    description: "降噪强度"
+    type: "float"
+    min: 0.0
+    max: 1.0
+    default: 1.0
+    
+  # 输出文件名
+  filename_prefix:
+    node_id: "result"
+    input_name: "filename_prefix"
+    description: "输出文件名前缀"
+    type: "string"
+
+# 节点验证规则
+node_validation:
+  required_nodes:
+    - id: "5"
+      class_type: "EmptyLatentImage"
+      description: "空白潜在图像节点"
+      
+    - id: "6"
+      class_type: "CLIPTextEncode"
+      description: "正面提示词编码节点"
+      
+    - id: "execute"
+      class_type: "FluxSamplerParams+"
+      description: "FLUX采样器节点"
+      
+    - id: "result"
+      class_type: "SaveImage"
+      description: "图像保存节点"
+
+# 输出配置
+output_config:
+  # 输出目录（相对于项目根目录）
+  output_directory: "output/txt2img"
+  
+  # 文件名模板
+  filename_template: "{task_id}_{timestamp}_{prompt_hash}"
+  
+  # 支持的格式
+  supported_formats: ["png", "jpg", "jpeg"]
+  
+  # 元数据保存
+  save_metadata: true
+  metadata_format: "json"  # json, yaml
+
+# 性能配置
+performance:
+  # 超时设置（秒）
+  task_timeout: 600
+  
+  # 重试次数
+  max_retries: 3
+  
+  # 内存监控
+  memory_limit_mb: 8192
+  
+  # 并发限制
+  max_concurrent_tasks: 1
+
+# 兼容性检查
+compatibility:
+  # 支持的ComfyUI版本
+  comfyui_version_min: "0.1.0"
+  
+  # 必需的自定义节点
+  required_custom_nodes:
+    - name: "ComfyUI-FluxSamplerParams"
+      description: "FLUX采样器参数节点"
+      url: "https://github.com/example/ComfyUI-FluxSamplerParams"

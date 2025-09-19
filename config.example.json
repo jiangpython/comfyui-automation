@@ -1,0 +1,39 @@
+{
+  "output_directory": "./output",
+  "database_path": "./data/database/tasks.db",
+  "workflows_directory": "./workflows",
+  
+  "batch_processing": {
+    "max_concurrent_tasks": 1,
+    "task_timeout": 300,
+    "batch_delay": 2.0,
+    "enable_progress_monitor": true
+  },
+  
+  "prompt_generation": {
+    "default_variation_count": 10,
+    "max_variations": 50,
+    "enable_template_system": true,
+    "quality_threshold": 0.7
+  },
+  
+  "workflow": {
+    "default_type": "txt2img",
+    "default_resolution": [1024, 1024],
+    "default_steps": 20,
+    "default_cfg_scale": 7.5
+  },
+  
+  "output": {
+    "generate_gallery": true,
+    "save_metadata": true,
+    "organize_by_date": true,
+    "enable_json_backup": true
+  },
+  
+  "analysis": {
+    "auto_analyze": false,
+    "generate_reports": true,
+    "optimization_enabled": true
+  }
+}
